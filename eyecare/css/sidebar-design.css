@@ -1,0 +1,110 @@
+/* Sidebar container */
+html{
+  color: white;
+}
+.sidebar {
+  width: 260px;
+  background-color: #2c3e50;
+  min-height: 100vh;
+  padding: 15px;
+  box-shadow: 2px 0 8px rgba(0, 0, 0, 0.1);
+  position: fixed;
+}
+
+/* Sidebar header */
+.sidebar-header {
+  text-align: center;
+  margin-bottom: 20px;
+}
+
+.profileimg {
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  object-fit: cover;
+}
+
+.sidebar-title {
+  font-size: 18px;
+  font-weight: bold;
+  margin-top: 10px;
+  color: white;
+}
+
+/* Dropdown wrapper */
+.dropdown {
+  margin-bottom: 10px;
+  text-align: center;
+
+}
+
+/* Hide checkboxes */
+.dropdown input[type="checkbox"] {
+  display: none;
+}
+
+/* Dropdown button (label) */
+.dropdown-btn {
+  display: block;
+  padding: 10px 15px;
+  background-color: #e0e0e0;
+  color: #333;
+  font-weight: bold;
+  cursor: pointer;
+  border-radius: 5px;
+  transition: background-color 0.3s;
+  text-align: center;
+}
+
+.dropdown-btn:hover {
+  background-color: #ccc;
+}
+
+/* Dropdown content */
+.dropdown-content {
+  display: none;
+  flex-direction: column;
+  padding-left: 15px;
+  margin-top: 5px;
+}
+
+/* Show content when checkbox is checked */
+.dropdown input[type="checkbox"]:checked + .dropdown-btn + .dropdown-content {
+  display: flex;
+}
+
+/* Dropdown item */
+.dropdown-item {
+  padding: 8px 10px;
+  margin-bottom: 3px;
+  border-radius: 4px;
+  cursor: pointer;
+  background-color:rgb(64, 64, 107);
+  border: solid 2px white;
+  transition: background-color 0.2s;
+}
+
+.dropdown-item:hover {
+  color: white;
+  background-color: #2c3e50;
+}
+
+/* Logout button */
+.out{
+  position: fixed;
+}
+.logout {
+  position: fixed;
+  top: 600px;           /* distance from top */
+  left: 20px;             /* stick to left side */
+  width: 100px;         /* adjust size of the icon */
+  height: 100px;
+  cursor: pointer;
+  z-index: 1000;       /* stay above other elements */
+}
+
+
+.logout img.out {
+  width: 30px;
+  cursor: pointer;
+}

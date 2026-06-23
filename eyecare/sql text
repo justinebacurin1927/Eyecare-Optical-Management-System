@@ -1,0 +1,153 @@
+-- 1. Category Table
+CREATE TABLE Category (
+    Category_ID INT PRIMARY KEY AUTO_INCREMENT,
+    Category_Name VARCHAR(255) NOT NULL,
+    Description TEXT
+);
+
+-- 2. Product Table
+CREATE TABLE Product (
+    Product_ID INT PRIMARY KEY AUTO_INCREMENT,
+    Product_Name VARCHAR(255) NOT NULL,
+    Description TEXT,
+    Category_ID INT,
+    Quantity INT DEFAULT 0,
+    Selling_Price DECIMAL(10, 2) NOT NULL,
+    Discounted_Price DECIMAL(10, 2),
+    Date_Added TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    Reorder_Level INT DEFAULT 10,
+    Reorder_Quantity INT DEFAULT 20,
+    FOREIGN KEY (Category_ID) REFERENCES Category(Category_ID)
+);
+
+-- 3. Patient Table (Updated with a single Address field)
+CREATE TABLE Patient (
+    Patient_ID INT PRIMARY KEY AUTO_INCREMENT,
+    First_Name VARCHAR(255) NOT NULL,
+    Middle_Name VARCHAR(255),
+    Last_Name VARCHAR(255) NOT NULL,
+    Birthdate DATE,
+    Gender ENUM('Male', 'Female', 'Other') NOT NULL,
+    Phone_Number VARCHAR(15),
+    Email VARCHAR(255),
+    Address VARCHAR(255),  -- Single Address field
+    Created_At TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    Updated_At TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+);
+
+-- 4. Frame Table (new)
+CREATE TABLE Frame (
+    Frame_ID INT PRIMARY KEY AUTO_INCREMENT,
+    Frame_Name VARCHAR(255) NOT NULL,
+    Frame_Brand VARCHAR(255),
+    Frame_Material VARCHAR(255),
+    Frame_Style VARCHAR(255),
+    Frame_Size VARCHAR(50)
+);
+
+-- 5. Lens_Type Table (new)
+CREATE TABLE Lens_Type (
+    Lens_Type_ID INT PRIMARY KEY AUTO_INCREMENT,
+    Lens_Type_Name VARCHAR(255) NOT NULL,
+    Lens_Material VARCHAR(255),
+    Lens_Coating VARCHAR(255)
+);
+
+-- 6. Prescription Table
+CREATE TABLE Prescription (
+    Prescription_ID INT PRIMARY KEY AUTO_INCREMENT,
+    Patient_ID INT,
+    Prescription_Date DATE NOT NULL,
+    Sphere DECIMAL(5, 2),
+    Cylinder DECIMAL(5, 2),
+    Axis INT,
+    Add DECIMAL(5, 2),
+    PD DECIMAL(5, 2), -- Pupillary Distance
+    Frame_ID INT,
+    Lens_Type_ID INT,
+    Tint VARCHAR(50),
+    Extras TEXT,
+    FOREIGN KEY (Patient_ID) REFERENCES Patient(Patient_ID),
+    FOREIGN KEY (Frame_ID) REFERENCES Frame(Frame_ID),
+    FOREIGN KEY (Lens_Type_ID) REFERENCES Lens_Type(Lens_Type_ID)
+);
+
+-- 7. Sale Transaction Table
+CREATE TABLE Sale_Transaction (
+    Sale_ID INT PRIMARY KEY AUTO_INCREMENT,
+    Patient_ID INT,
+    Transaction_Date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    Total_Amount DECIMAL(10, 2),
+    Discount_Amount DECIMAL(10, 2) DEFAULT 0,
+    Payment_Status ENUM('Paid', 'Pending', 'Refunded') DEFAULT 'Pending',
+    Created_At TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (Patient_ID) REFERENCES Patient(Patient_ID)
+);
+
+-- 8. Sale Item Table
+CREATE TABLE Sale_Item (
+    Sale_Item_ID INT PRIMARY KEY AUTO_INCREMENT,
+    Sale_ID INT,
+    Product_ID INT,
+    Quantity_Sold INT,
+    Unit_Price DECIMAL(10, 2),
+    Total_Price DECIMAL(10, 2),
+    FOREIGN KEY (Sale_ID) REFERENCES Sale_Transaction(Sale_ID),
+    FOREIGN KEY (Product_ID) REFERENCES Product(Product_ID)
+);
+
+-- 9. Supplier Table
+CREATE TABLE Supplier (
+    Supplier_ID INT PRIMARY KEY AUTO_INCREMENT,
+    Supplier_Name VARCHAR(255) NOT NULL,
+    Contact_Name VARCHAR(255),
+    Contact_Phone VARCHAR(15),
+    Contact_Email VARCHAR(255),
+    Address VARCHAR(255),
+    City VARCHAR(255),
+    State VARCHAR(255),
+    Postal_Code VARCHAR(20),
+    Country VARCHAR(255)
+);
+
+-- 10. Item Table (for Purchase Transactions)
+CREATE TABLE Item (
+    Item_ID INT PRIMARY KEY AUTO_INCREMENT,
+    Category_ID INT,
+    Item_Name VARCHAR(255) NOT NULL,
+    Quantity_In_Stock INT DEFAULT 0,
+    Purchase_Price DECIMAL(10, 2),
+    Selling_Price DECIMAL(10, 2),
+    Reorder_Level INT DEFAULT 10,
+    Supplier_ID INT,
+    Created_At TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (Category_ID) REFERENCES Category(Category_ID),
+    FOREIGN KEY (Supplier_ID) REFERENCES Supplier(Supplier_ID)
+);
+
+-- 11. Purchase Transaction Table
+CREATE TABLE Purchase_Transaction (
+    Purchase_ID INT PRIMARY KEY AUTO_INCREMENT,
+    Item_ID INT,
+    Transaction_Code VARCHAR(100) NOT NULL,
+    Supplier_ID INT,
+    Quantity_Purchased INT,
+    Total_Cost DECIMAL(10, 2),
+    Purchase_Price DECIMAL(10, 2),
+    Purchase_Date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (Item_ID) REFERENCES Item(Item_ID),
+    FOREIGN KEY (Supplier_ID) REFERENCES Supplier(Supplier_ID)
+);
+
+-- 12. Inventory Log Table
+CREATE TABLE Inventory_Log (
+    Log_ID INT PRIMARY KEY AUTO_INCREMENT,
+    Item_ID INT,
+    Change_Type ENUM('Restock', 'Sale', 'Adjustment') NOT NULL,
+    Quantity_Changed INT NOT NULL,
+    Timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    Notes TEXT,
+    FOREIGN KEY (Item_ID) REFERENCES Item(Item_ID)
+);
+
+
