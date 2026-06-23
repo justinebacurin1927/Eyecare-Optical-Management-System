@@ -1,0 +1,106 @@
+services:
+  nginx:
+    build:
+      context: ./docker/nginx
+    container_name: eyecare-nginx
+    restart: unless-stopped
+    ports:
+      - "8082:80"
+    volumes:
+      - .:/var/www:ro
+    depends_on:
+      - php
+    networks:
+      - eyecare-network
+
+  php:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: base
+    image: eyecare-php
+    container_name: eyecare-php
+    restart: unless-stopped
+    env_file: .env.docker
+    environment:
+      DB_HOST: db
+      DB_PORT: 3306
+      SESSION_DRIVER: file
+      CACHE_STORE: file
+      QUEUE_CONNECTION: sync
+    volumes:
+      - .:/var/www
+      - storage-data:/var/www/storage
+    depends_on:
+      db:
+        condition: service_healthy
+    networks:
+      - eyecare-network
+
+  db:
+    image: mysql:8
+    container_name: eyecare-db
+    restart: unless-stopped
+    ports:
+      - "3307:3306"
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: optics_db
+    volumes:
+      - mysql-data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-proot"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - eyecare-network
+
+  phpmyadmin:
+    image: phpmyadmin/phpmyadmin
+    container_name: eyecare-phpmyadmin
+    restart: unless-stopped
+    ports:
+      - "8083:80"
+    environment:
+      PMA_HOST: db
+      PMA_USER: root
+      PMA_PASSWORD: root
+      UPLOAD_LIMIT: 100M
+    depends_on:
+      - db
+    networks:
+      - eyecare-network
+
+  worker:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: base
+    image: eyecare-php
+    container_name: eyecare-worker
+    restart: unless-stopped
+    command: php /var/www/artisan queue:work --sleep=3 --tries=3 --max-time=3600
+    env_file: .env.docker
+    environment:
+      DB_HOST: db
+      DB_PORT: 3306
+      SESSION_DRIVER: file
+      CACHE_STORE: file
+      QUEUE_CONNECTION: database
+    volumes:
+      - .:/var/www
+      - storage-data:/var/www/storage
+    depends_on:
+      db:
+        condition: service_healthy
+    networks:
+      - eyecare-network
+
+volumes:
+  mysql-data:
+  storage-data:
+
+networks:
+  eyecare-network:
+    driver: bridge

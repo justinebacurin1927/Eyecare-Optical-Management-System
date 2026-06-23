@@ -78,9 +78,21 @@ Test files cover:
 | **N+1 query** | `SaleTransactionController::destroy` now eager-loads `saleItems.product` before iterating. |
 | **Database indexes** | Added on columns used in `WHERE`, `LIKE`, and `GROUP BY` queries. |
 
+### Containerization
+
+| Feature | Details |
+|---|---|
+| **Docker Compose** | 5 services: `nginx` (web server), `php` (PHP 8.3 FPM), `db` (MySQL 8), `phpmyadmin`, `worker` (queue listener). |
+| **Multi-stage build** | Node stage builds Vite assets, then PHP-FPM stage produces a lean production image. |
+| **Minimal port footprint** | Nginx on `8082`, phpMyAdmin on `8083`, MySQL on `3307` — avoids conflicts with existing containers. |
+| **`.env.docker`** | Separate environment file for the Docker setup. Copy from `.env.docker.example` and set `APP_KEY`. |
+| **Makefile** | Convenience commands: `make up`, `make down`, `make migrate`, `make test`, `make shell`. |
+
 ---
 
 ## Setup
+
+### Without Docker
 
 ```bash
 cp .env.example .env
@@ -91,6 +103,31 @@ php artisan key:generate
 php artisan migrate --seed
 php artisan serve
 ```
+
+### With Docker
+
+```bash
+cp .env.docker.example .env.docker
+# Ensure APP_KEY in .env.docker matches your local .env or generate a new one
+docker compose up -d --build
+docker compose exec php php artisan migrate --seed
+```
+
+The app is then available at `http://localhost:8082` and phpMyAdmin at `http://localhost:8083`.
+
+#### Makefile Commands
+
+| Command | Description |
+|---|---|
+| `make up` | Start all containers |
+| `make down` | Stop all containers |
+| `make build` | Rebuild images |
+| `make shell` | Open shell in the PHP container |
+| `make artisan cmd=<command>` | Run any Artisan command |
+| `make migrate` | Run `php artisan migrate --force` |
+| `make seed` | Run `php artisan db:seed --force` |
+| `make test` | Run the test suite inside the container |
+| `make logs` | Tail all container logs |
 
 ## Default Users
 
