@@ -2,37 +2,31 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Requests\StoreCategoryRequest;
+use App\Http\Requests\UpdateCategoryRequest;
 use App\Models\Category;
-use Illuminate\Http\Request;
 
 class CategoryController extends Controller
 {
     public function index()
     {
-        $categories = Category::withCount('products')->orderBy('created_at', 'desc')->get();
+        $categories = Category::withCount('products')
+            ->orderBy('created_at', 'desc')
+            ->paginate(20);
+
         return view('categories.index', compact('categories'));
     }
 
-    public function store(Request $request)
+    public function store(StoreCategoryRequest $request)
     {
-        $validated = $request->validate([
-            'name' => 'required|string|max:255|unique:categories,name',
-            'description' => 'nullable|string',
-        ]);
-
-        Category::create($validated);
+        Category::create($request->validated());
 
         return redirect()->route('categories.index')->with('success', 'Category created successfully.');
     }
 
-    public function update(Request $request, Category $category)
+    public function update(UpdateCategoryRequest $request, Category $category)
     {
-        $validated = $request->validate([
-            'name' => 'required|string|max:255|unique:categories,name,' . $category->id,
-            'description' => 'nullable|string',
-        ]);
-
-        $category->update($validated);
+        $category->update($request->validated());
 
         return redirect()->route('categories.index')->with('success', 'Category updated successfully.');
     }
@@ -42,7 +36,9 @@ class CategoryController extends Controller
         if ($category->products()->count() > 0) {
             return redirect()->route('categories.index')->with('error', 'Cannot delete category with existing products.');
         }
+
         $category->delete();
+
         return redirect()->route('categories.index')->with('success', 'Category deleted successfully.');
     }
 }

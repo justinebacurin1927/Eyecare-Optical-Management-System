@@ -10,16 +10,7 @@ class CheckRole
 {
     public function handle(Request $request, Closure $next, string ...$roles): Response
     {
-        if (!auth()->check()) {
-            return redirect()->route('login');
-        }
-
         $user = auth()->user();
-
-        if (!$user->status) {
-            auth()->logout();
-            return redirect()->route('login')->withErrors(['email' => 'Your account is inactive.']);
-        }
 
         foreach ($roles as $role) {
             if ($user->role === $role) {

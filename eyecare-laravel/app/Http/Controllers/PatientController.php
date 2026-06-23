@@ -2,19 +2,26 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Patient;
-use App\Models\Prescription;
+use App\Http\Requests\StorePatientRequest;
+use App\Http\Requests\UpdatePatientRequest;
+use App\Http\Requests\SearchPatientRequest;
 use App\Models\Frame;
 use App\Models\LensType;
-use Illuminate\Http\Request;
+use App\Models\Patient;
+use App\Services\PatientService;
 
 class PatientController extends Controller
 {
+    public function __construct(
+        private readonly PatientService $patientService
+    ) {}
+
     public function index()
     {
         $patients = Patient::with('prescription.frame', 'prescription.lensType')
             ->orderBy('created_at', 'desc')
             ->paginate(10);
+
         return view('patients.index', compact('patients'));
     }
 
@@ -22,50 +29,26 @@ class PatientController extends Controller
     {
         $frames = Frame::all();
         $lensTypes = LensType::all();
+
         return view('patients.create', compact('frames', 'lensTypes'));
     }
 
-    public function store(Request $request)
+    public function store(StorePatientRequest $request)
     {
-        $validated = $request->validate([
-            'first_name' => 'required|string|max:255',
-            'middle_name' => 'nullable|string|max:255',
-            'last_name' => 'required|string|max:255',
-            'birthdate' => 'required|date',
-            'gender' => 'required|string',
-            'phone_number' => 'nullable|string|max:20',
-            'address' => 'nullable|string',
-            'sphere' => 'nullable|string|max:50',
-            'cylinder' => 'nullable|string|max:50',
-            'axis' => 'nullable|string|max:50',
-            'addition' => 'nullable|string|max:50',
-            'pd' => 'nullable|string|max:50',
-            'frame_id' => 'nullable|exists:frames,id',
-            'lens_type_id' => 'nullable|exists:lens_types,id',
-            'tint' => 'nullable|string|max:50',
-        ]);
+        $validated = $request->validated();
 
-        $patient = Patient::create([
-            'first_name' => $validated['first_name'],
-            'middle_name' => $validated['middle_name'],
-            'last_name' => $validated['last_name'],
-            'birthdate' => $validated['birthdate'],
-            'gender' => $validated['gender'],
-            'phone_number' => $validated['phone_number'],
-            'address' => $validated['address'],
-        ]);
+        $prescriptionData = [
+            'sphere' => $validated['sphere'] ?? null,
+            'cylinder' => $validated['cylinder'] ?? null,
+            'axis' => $validated['axis'] ?? null,
+            'addition' => $validated['addition'] ?? null,
+            'pd' => $validated['pd'] ?? null,
+            'frame_id' => $validated['frame_id'] ?? null,
+            'lens_type_id' => $validated['lens_type_id'] ?? null,
+            'tint' => $validated['tint'] ?? null,
+        ];
 
-        Prescription::create([
-            'patient_id' => $patient->id,
-            'sphere' => $validated['sphere'],
-            'cylinder' => $validated['cylinder'],
-            'axis' => $validated['axis'],
-            'addition' => $validated['addition'],
-            'pd' => $validated['pd'],
-            'frame_id' => $validated['frame_id'],
-            'lens_type_id' => $validated['lens_type_id'],
-            'tint' => $validated['tint'],
-        ]);
+        $this->patientService->createPatientWithPrescription($validated, $prescriptionData);
 
         return redirect()->route('patients.index')->with('success', 'Patient registered successfully.');
     }
@@ -73,6 +56,7 @@ class PatientController extends Controller
     public function show(Patient $patient)
     {
         $patient->load('prescription.frame', 'prescription.lensType');
+
         return view('patients.show', compact('patient'));
     }
 
@@ -81,51 +65,26 @@ class PatientController extends Controller
         $patient->load('prescription');
         $frames = Frame::all();
         $lensTypes = LensType::all();
+
         return view('patients.edit', compact('patient', 'frames', 'lensTypes'));
     }
 
-    public function update(Request $request, Patient $patient)
+    public function update(UpdatePatientRequest $request, Patient $patient)
     {
-        $validated = $request->validate([
-            'first_name' => 'required|string|max:255',
-            'middle_name' => 'nullable|string|max:255',
-            'last_name' => 'required|string|max:255',
-            'birthdate' => 'required|date',
-            'gender' => 'required|string',
-            'phone_number' => 'nullable|string|max:20',
-            'address' => 'nullable|string',
-            'sphere' => 'nullable|string|max:50',
-            'cylinder' => 'nullable|string|max:50',
-            'axis' => 'nullable|string|max:50',
-            'addition' => 'nullable|string|max:50',
-            'pd' => 'nullable|string|max:50',
-            'frame_id' => 'nullable|exists:frames,id',
-            'lens_type_id' => 'nullable|exists:lens_types,id',
-            'tint' => 'nullable|string|max:50',
-        ]);
+        $validated = $request->validated();
 
-        $patient->update([
-            'first_name' => $validated['first_name'],
-            'middle_name' => $validated['middle_name'],
-            'last_name' => $validated['last_name'],
-            'birthdate' => $validated['birthdate'],
-            'gender' => $validated['gender'],
-            'phone_number' => $validated['phone_number'],
-            'address' => $validated['address'],
-        ]);
+        $prescriptionData = [
+            'sphere' => $validated['sphere'] ?? null,
+            'cylinder' => $validated['cylinder'] ?? null,
+            'axis' => $validated['axis'] ?? null,
+            'addition' => $validated['addition'] ?? null,
+            'pd' => $validated['pd'] ?? null,
+            'frame_id' => $validated['frame_id'] ?? null,
+            'lens_type_id' => $validated['lens_type_id'] ?? null,
+            'tint' => $validated['tint'] ?? null,
+        ];
 
-        if ($patient->prescription) {
-            $patient->prescription->update([
-                'sphere' => $validated['sphere'],
-                'cylinder' => $validated['cylinder'],
-                'axis' => $validated['axis'],
-                'addition' => $validated['addition'],
-                'pd' => $validated['pd'],
-                'frame_id' => $validated['frame_id'],
-                'lens_type_id' => $validated['lens_type_id'],
-                'tint' => $validated['tint'],
-            ]);
-        }
+        $this->patientService->updatePatientWithPrescription($patient, $validated, $prescriptionData);
 
         return redirect()->route('patients.index')->with('success', 'Patient updated successfully.');
     }
@@ -133,18 +92,14 @@ class PatientController extends Controller
     public function destroy(Patient $patient)
     {
         $patient->delete();
+
         return redirect()->route('patients.index')->with('success', 'Patient deleted successfully.');
     }
 
-    public function search(Request $request)
+    public function search(SearchPatientRequest $request)
     {
-        $search = $request->get('q');
-        $patients = Patient::where('first_name', 'like', "%{$search}%")
-            ->orWhere('last_name', 'like', "%{$search}%")
-            ->orWhere('middle_name', 'like', "%{$search}%")
-            ->orWhere('phone_number', 'like', "%{$search}%")
-            ->orderBy('created_at', 'desc')
-            ->paginate(10);
+        $search = $request->validated('q');
+        $patients = $this->patientService->searchPatients($search);
 
         if ($request->ajax()) {
             return response()->json($patients);
